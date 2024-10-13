@@ -1,0 +1,557 @@
+local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/mscjumala/BRM5/refs/heads/main/UiLib'))()
+local Flags = Library.Flags
+
+local Players = game:GetService('Players')
+local LocalPlayer = Players.LocalPlayer
+local Camera = game.Workspace.CurrentCamera
+local LChar = LocalPlayer.Character
+
+local RunService = game:GetService('RunService')
+local TweenService = game:GetService('TweenService')
+local UserInputService = game:GetService('UserInputService')
+-->FUNCTIONS<--
+local function af_getdistance(part)
+    local dist = (Camera.CFrame.Position - part.Position).Magnitude
+    return dist
+end
+local function notBehindWall(target)
+	local RayParams = RaycastParams.new()
+	RayParams.FilterType = Enum.RaycastFilterType.Exclude
+	RayParams.FilterDescendantsInstances = {Ignore,hitboxlist}
+	local RayResult = workspace:Raycast(workspace.CurrentCamera.CFrame.Position,(target.Position - workspace.CurrentCamera.CFrame.Position), RayParams) --Origin, Destination, RayParams 
+	if RayResult then
+        if RayResult.Instance.Parent == target.Parent then   
+            return true
+        end
+
+    else
+        return false
+	end
+end
+-->ESP<--
+for i,v in pairs(Players:GetChildren()) do
+    local BoxOutline = Drawing.new("Square")
+    BoxOutline.Visible = false
+    BoxOutline.Color = Color3.new(0,0,0)
+    BoxOutline.Filled = false
+    BoxOutline.Transparency = 1
+    BoxOutline.Thickness = 3
+    local Box = Drawing.new("Square")
+    Box.Visible = false
+    Box.Color = Color3.new(0.25, 0.75, 0.1)
+    Box.Filled = false
+    Box.Transparency = 1
+    Box.Thickness = 1
+
+    local Distance = Drawing.new('Text')
+    Distance.Visible = false
+    Distance.Center = true
+    Distance.Font = 2
+    Distance.Color = Color3.new(0.25, 0.75, 0.1)
+    Distance.Outline = true
+    Distance.OutlineColor = Color3.new(0,0,0)
+    Distance.Size = 13
+
+    local Name = Drawing.new('Text')
+    Name.Visible = false
+    Name.Center = true
+    Name.Font = 2
+    Name.Color = Color3.new(0.25, 0.75, 0.1)
+    Name.Outline = true
+    Name.OutlineColor = Color3.new(0,0,0)
+    Name.Size = 13
+
+    local HealthBarOutline = Drawing.new("Square")
+    HealthBarOutline.Visible = false
+    HealthBarOutline.Color = Color3.new(0,0,0)
+    HealthBarOutline.Filled = false
+    HealthBarOutline.Transparency = 1
+    HealthBarOutline.Thickness = 3
+    local HealthBar = Drawing.new("Square")
+    HealthBar.Visible = false
+    HealthBar.Color = Color3.new(0,1,0)
+    HealthBar.Filled = true
+    HealthBar.Transparency = 1
+    HealthBar.Thickness = 1
+
+    function boxesp()
+        RunService.RenderStepped:Connect(function()
+            if v.Character ~= nil and v.Character ~= LChar and v.Character:FindFirstChild('Head') ~= nil and v.Character:FindFirstChild('HumanoidRootPart') ~= nil and v.Character:FindFirstChild('Humanoid') and v.Character:FindFirstChild('Humanoid').Health > 0 then
+
+                local Target2dPosition, IsVisible = workspace.CurrentCamera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+                local scale_factor = 1 / (Target2dPosition.Z * math.tan(math.rad(workspace.CurrentCamera.FieldOfView * 0.5)) * 2) * 100
+                local width, height = math.floor(40 * scale_factor), math.floor(62 * scale_factor)
+                if Flags.esp_teamcheck then
+                    if v.TeamColor == LocalPlayer.TeamColor then
+                        HealthBarOutline.Visible = false
+                        BoxOutline.Visible = false
+                        Box.Visible = false
+                        Distance.Visible = false
+                        Name.Visible = false
+                        HealthBar.Visible = false
+                        return
+                    end
+                end
+                if IsVisible then
+                    if Flags.esp_box then
+                        Box.Visible = true
+                        Box.Size = Vector2.new(width, height)
+                        Box.Position = Vector2.new(Target2dPosition.X - Box.Size.X / 2, Target2dPosition.Y - Box.Size.Y / 2)
+                        BoxOutline.Visible = true
+                        BoxOutline.Size = Vector2.new(width, height)
+                        BoxOutline.Position = Vector2.new(Target2dPosition.X - Box.Size.X / 2, Target2dPosition.Y - Box.Size.Y / 2)
+                    else
+                        Box.Visible = false
+                        BoxOutline.Visible = false
+                    end
+                    if Flags.esp_dist then
+                        Distance.Visible = true
+                        Distance.Text = tostring(math.floor(af_getdistance(v.Character:FindFirstChild('HumanoidRootPart'))))
+                        Distance.Position = Vector2.new(Target2dPosition.X,Target2dPosition.Y + Box.Size.Y / 2)
+                    else
+                        Distance.Visible = false
+                    end
+                    if Flags.esp_name then
+                        Name.Visible = true
+                        Name.Text = v.Name
+                        Name.Position = Vector2.new(Target2dPosition.X,Target2dPosition.Y - Box.Size.Y / 2) - Vector2.new(0,15)
+                    else
+                        Name.Visible = false
+                    end
+                    if Flags.esp_health then
+                        HealthBarOutline.Size = Vector2.new(Box.Size.X/5,Box.Size.Y)
+                        HealthBarOutline.Visible = true
+                        HealthBarOutline.Position = Vector2.new(Target2dPosition.X-  Box.Size.X / 2,Target2dPosition.Y - Box.Size.Y / 2)
+
+                        HealthBar.Size = Vector2.new(Box.Size.X/5,Box.Size.Y)
+                        HealthBar.Position = Vector2.new(Target2dPosition.X-  Box.Size.X / 2,Target2dPosition.Y - Box.Size.Y / 2 - (1/HealthBar.Size.Y))
+                        HealthBar.Visible = true
+                    else
+                        HealthBarOutline.Visible = false
+                        HealthBar.Visible = false
+                    end
+                else
+                    HealthBarOutline.Visible = false
+                    BoxOutline.Visible = false
+                    Box.Visible = false
+                    Distance.Visible = false
+                    Name.Visible = false
+                    HealthBar.Visible = false
+                end
+            else
+                HealthBarOutline.Visible = false
+                Box.Visible = false
+                BoxOutline.Visible = false
+                Distance.Visible = false
+                Name.Visible = false
+                HealthBar.Visible = false
+            end
+        end)
+    end
+    coroutine.wrap(boxesp)()
+end
+
+game.Players.PlayerAdded:Connect(function(v)
+    local BoxOutline = Drawing.new("Square")
+    BoxOutline.Visible = false
+    BoxOutline.Color = Color3.new(0,0,0)
+    BoxOutline.Filled = false
+    BoxOutline.Transparency = 1
+    BoxOutline.Thickness = 3
+    local Box = Drawing.new("Square")
+    Box.Visible = false
+    Box.Color = Color3.new(0.25, 0.75, 0.1)
+    Box.Filled = false
+    Box.Transparency = 1
+    Box.Thickness = 1
+
+    local Distance = Drawing.new('Text')
+    Distance.Visible = false
+    Distance.Center = true
+    Distance.Font = 2
+    Distance.Color = Color3.new(0.25, 0.75, 0.1)
+    Distance.Outline = true
+    Distance.OutlineColor = Color3.new(0,0,0)
+    Distance.Size = 13
+
+    local Name = Drawing.new('Text')
+    Name.Visible = false
+    Name.Center = true
+    Name.Font = 2
+    Name.Color = Color3.new(0.25, 0.75, 0.1)
+    Name.Outline = true
+    Name.OutlineColor = Color3.new(0,0,0)
+    Name.Size = 13
+
+    local HealthBarOutline = Drawing.new("Square")
+    HealthBarOutline.Visible = false
+    HealthBarOutline.Color = Color3.new(0,0,0)
+    HealthBarOutline.Filled = false
+    HealthBarOutline.Transparency = 1
+    HealthBarOutline.Thickness = 1
+    local HealthBar = Drawing.new("Square")
+    HealthBar.Visible = false
+    HealthBar.Color = Color3.new(0,1,0)
+    HealthBar.Filled = true
+    HealthBar.Transparency = 1
+    HealthBar.Thickness = 1
+
+    function boxesp()
+        RunService.RenderStepped:Connect(function()
+            if v.Character ~= nil and v.Character ~= LChar and v.Character:FindFirstChild('Head') ~= nil and v.Character:FindFirstChild('HumanoidRootPart') ~= nil and v.Character:FindFirstChild('Humanoid') and v.Character:FindFirstChild('Humanoid').Health > 0 then
+
+                local Target2dPosition, IsVisible = workspace.CurrentCamera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+                local scale_factor = 1 / (Target2dPosition.Z * math.tan(math.rad(workspace.CurrentCamera.FieldOfView * 0.5)) * 2) * 100
+                local width, height = math.floor(40 * scale_factor), math.floor(62 * scale_factor)
+                if Flags.esp_teamcheck then
+                    if v.TeamColor == LocalPlayer.TeamColor then
+                        HealthBarOutline.Visible = false
+                        BoxOutline.Visible = false
+                        Box.Visible = false
+                        Distance.Visible = false
+                        Name.Visible = false
+                        HealthBar.Visible = false
+                        return
+                    end
+                end
+                if IsVisible then
+                    if Flags.esp_box then
+                        Box.Visible = true
+                        Box.Size = Vector2.new(width, height)
+                        Box.Position = Vector2.new(Target2dPosition.X - Box.Size.X / 2, Target2dPosition.Y - Box.Size.Y / 2)
+                        BoxOutline.Visible = true
+                        BoxOutline.Size = Vector2.new(width, height)
+                        BoxOutline.Position = Vector2.new(Target2dPosition.X - Box.Size.X / 2, Target2dPosition.Y - Box.Size.Y / 2)
+                    else
+                        Box.Visible = false
+                        BoxOutline.Visible = false
+                    end
+                    if Flags.esp_dist then
+                        Distance.Visible = true
+                        Distance.Text = tostring(math.floor(af_getdistance(v.Character:FindFirstChild('HumanoidRootPart'))))
+                        Distance.Position = Vector2.new(Target2dPosition.X,Target2dPosition.Y + Box.Size.Y / 2)
+                    else
+                        Distance.Visible = false
+                    end
+                    if Flags.esp_name then
+                        Name.Visible = true
+                        Name.Text = v.Name
+                        Name.Position = Vector2.new(Target2dPosition.X,Target2dPosition.Y - Box.Size.Y / 2) - Vector2.new(0,15)
+                    else
+                        Name.Visible = false
+                    end
+                    if Flags.esp_health then
+                        HealthBarOutline.Size = Vector2.new(Box.Size.X/5,Box.Size.Y)
+                        HealthBarOutline.Visible = true
+                        HealthBarOutline.Position = Vector2.new(Target2dPosition.X-  Box.Size.X / 2,Target2dPosition.Y - Box.Size.Y / 2)
+
+                        HealthBar.Size = Vector2.new(Box.Size.X/5,Box.Size.Y)
+                        HealthBar.Position = Vector2.new(Target2dPosition.X-  Box.Size.X / 2,Target2dPosition.Y - Box.Size.Y / 2 - (1/HealthBar.Size.Y))
+                        HealthBar.Visible = true
+                    else
+                        HealthBarOutline.Visible = false
+                        HealthBar.Visible = false
+                    end
+                else
+                    HealthBarOutline.Visible = false
+                    BoxOutline.Visible = false
+                    Box.Visible = false
+                    Distance.Visible = false
+                    Name.Visible = false
+                    HealthBar.Visible = false
+                end
+            else
+                HealthBarOutline.Visible = false
+                Box.Visible = false
+                BoxOutline.Visible = false
+                Distance.Visible = false
+                Name.Visible = false
+                HealthBar.Visible = false
+            end
+        end)
+    end
+    coroutine.wrap(boxesp)()
+end)
+-->VIEWMODEL<--
+RunService.RenderStepped:Connect(function()
+    if Flags.vm_arms then
+        if Camera:FindFirstChild('WorldModel') then
+            for i,v in pairs(Camera:FindFirstChild('WorldModel').Model:GetChildren()) do
+                if v:IsA('BasePart') and v.Name ~= 'Root' and v.Name ~= 'Cam' then
+                    v.Color = Color3.new(0.25, 0.75, 0.1)
+                    v.Material = Enum.Material.ForceField
+                end
+            end
+        end
+    elseif Flags.vm_arms == false then
+        if Camera:FindFirstChild('WorldModel') then
+            for i,v in pairs(Camera:FindFirstChild('WorldModel').Model:GetChildren()) do
+                if v:IsA('BasePart') and v.Name ~= 'Root' and v.Name ~= 'Cam' then
+                    if v.Name == 'Glove' then
+                        v.Material = Enum.Material.Fabric
+                        v.Color = Color3.new(0,0,0)
+                    else
+                        v.Material = Enum.Material.SmoothPlastic
+                        v.Color = Color3.new(1,0.7,0.5)
+                    end
+                end
+            end
+        end
+    end
+    if Flags.vm_gun then
+        if Camera:FindFirstChild('WorldModel') and Camera.WorldModel.Model:FindFirstChild('weapon') then
+            for i,v in pairs(Camera.WorldModel.Model:FindFirstChild('weapon'):GetDescendants()) do
+                if v:IsA('BasePart') then
+                    v.Color = Color3.new(0.25, 0.75, 0.1)
+                    v.Material = Enum.Material.ForceField
+                end
+            end
+        end
+    elseif Flags.vm_gun == false then
+        if Camera:FindFirstChild('WorldModel') and Camera.WorldModel.Model:FindFirstChild('weapon') then
+            for i,v in pairs(Camera.WorldModel.Model:FindFirstChild('weapon'):GetDescendants()) do
+                if v:IsA('BasePart') then
+                    v.Color = Color3.new(0,0,0)
+                    v.Material = Enum.Material.Metal
+                end
+            end
+        end
+    end
+end)
+-->AIMBOT<--
+local aimEnabled = false
+local aimTarget = nil
+local previousPosition
+local charvelocity = Vector3.new(0, 0, 0)
+local lastMousePosition = Vector2.new(0, 0)
+
+local fovCircle = Drawing.new("Circle")
+fovCircle.Color = Color3.new(1, 1, 1)
+fovCircle.Thickness = 2
+fovCircle.Transparency = 1
+fovCircle.Filled = false
+fovCircle.Radius = Flags.aimbot_fovsize
+fovCircle.Visible = true
+
+local function updateFOVCircle()
+    local screenCenter = Vector2.new(game.Workspace.CurrentCamera.ViewportSize.X / 2, game.Workspace.CurrentCamera.ViewportSize.Y / 2)
+    fovCircle.Position = screenCenter
+    fovCircle.Radius = Flags.aimbot_fovsize
+end
+
+local function getNearestTarget()
+    local nearestTarget = nil
+    local shortestDistance = fovCircle.Radius  
+    print('finding')
+    for i, v in pairs(Players:GetChildren()) do
+        if v.Character and v.Character:FindFirstChild('Head') and v.Character:FindFirstChild('HumanoidRootPart') and v.Character:FindFirstChild('Humanoid') and v.Character:FindFirstChild('Humanoid').Health > 0 and v ~= LocalPlayer then
+            print('found')
+            local screenPos, onScreen = game.Workspace.CurrentCamera:WorldToViewportPoint(v.Character:FindFirstChild("Head").Position)
+            if onScreen then
+                local screenCenter = Vector2.new(game.Workspace.CurrentCamera.ViewportSize.X / 2, game.Workspace.CurrentCamera.ViewportSize.Y / 2)
+                local headPos = Vector2.new(screenPos.X, screenPos.Y)
+                local distancer = (screenCenter - headPos).Magnitude
+                if tonumber(distancer) < tonumber(shortestDistance) then
+                    shortestDistance = distancer
+                    nearestTarget = v.Character:FindFirstChild("Head")
+                end
+            end
+        end
+    end
+    
+    return nearestTarget
+end
+
+local function aimAt(target, deltaTime)
+    print(target)
+    if target then
+        local currentPosition = target.Parent:FindFirstChild('HumanoidRootPart').Position
+        local positionDelta = currentPosition - previousPosition
+        if deltaTime > 0 then
+            velocity = positionDelta / deltaTime
+        end
+        previousPosition = currentPosition
+
+        local screenPos = game.Workspace.CurrentCamera:WorldToViewportPoint(target.Position)
+        local screenCenter = Vector2.new(game.Workspace.CurrentCamera.ViewportSize.X / 2, game.Workspace.CurrentCamera.ViewportSize.Y / 2)
+        local targetDeltaX = screenPos.X - screenCenter.X
+        local targetDeltaY = screenPos.Y - screenCenter.Y
+
+        -- Smooth mouse movement
+        local smoothX = targetDeltaX * Flags.aimbot_smoothing / 100
+        local smoothY = targetDeltaY * Flags.aimbot_smoothing / 100
+
+        -- Update last mouse position
+        lastMousePosition = lastMousePosition + Vector2.new(smoothX, smoothY)
+
+        mousemoverel(smoothX, smoothY)
+        if notBehindWall(target) and Flags.ragebot_triggerbot then
+            mouse1press()  
+            task.wait()
+            mouse1release() 
+        end
+    end
+end
+
+UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 and Flags.aimbot_toggle then
+        aimEnabled = true
+        if aimTarget == nil then
+            aimTarget = getNearestTarget()
+            if aimTarget then
+                previousPosition = aimTarget.Parent:FindFirstChild('HumanoidRootPart').Position
+            end
+        end
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        aimEnabled = false
+        aimTarget = nil
+        lastMousePosition = Vector2.new(0, 0)
+    end
+end)
+
+RunService.RenderStepped:Connect(function(DT)
+    updateFOVCircle()
+    
+    if aimEnabled and aimTarget then
+        aimAt(aimTarget,DT)
+    end
+end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-->UI<--
+local Window = Library:Window({Text = "Diddy.hook"})
+local Tab_Aiming = Window:Tab({Text = "Aiming"})
+local Tab_Visual = Window:Tab({Text = "Visual"})
+local Section_Aiming = Tab_Aiming:Section({Text = "Aiming"})
+Section_Aiming:Check({
+    Text = "AimBot",
+    Flag = 'aimbot_toggle',
+    Callback = function(bool)
+        
+    end
+})
+Section_Aiming:Slider({
+    Text = "Fov Size",
+    Flag = 'aimbot_fovsize',
+    Minimum = 10,
+    Default = 100,
+    Maximum = 1000,
+    Postfix = "",
+    Callback = function(n)
+        
+    end
+})
+Section_Aiming:Dropdown({
+    Text = "Hit Part",
+    Flag = 'aimbot_hitpart',
+    List = {"Head", "Torso"},
+    Callback = function(opt)
+        
+    end
+})
+Section_Aiming:Slider({
+    Text = "Smoothing",
+    Flag = 'aimbot_smoothing',
+    Minimum = 10,
+    Default = 50,
+    Maximum = 100,
+    Postfix = "%",
+    Callback = function(n)
+        
+    end
+})
+
+local Section_RageBot = Tab_Aiming:Section({
+    Text = "Rage Bot",
+    Side = 'Right'
+})
+Section_RageBot:Check({
+    Text = "Trigger Bot",
+    Flag = 'ragebot_triggerbot',
+    Callback = function(bool)
+        
+    end
+})
+
+local Section_Esp = Tab_Visual:Section({
+    Text = "Esp",
+    Side = 'Left'
+})
+Section_Esp:Check({
+    Text = "Box",
+    Flag = 'esp_box',
+    Callback = function(bool)
+        
+    end
+})
+Section_Esp:Check({
+    Text = "Health (Broken)",
+    Flag = 'esp_health',
+    Callback = function(bool)
+        
+    end
+})
+Section_Esp:Check({
+    Text = "Name",
+    Flag = 'esp_name',
+    Callback = function(bool)
+        
+    end
+})
+Section_Esp:Check({
+    Text = "Dist",
+    Flag = 'esp_dist',
+    Callback = function(bool)
+        
+    end
+})
+Section_Esp:Check({
+    Text = "Team Check (Broken)",
+    Flag = 'esp_teamcheck',
+    Callback = function(bool)
+        
+    end
+})
+
+local Section_ViewModel = Tab_Visual:Section({
+    Text = "ViewModel",
+    Side = 'Right'
+})
+Section_ViewModel:Check({
+    Text = "Arms",
+    Flag = 'vm_arms',
+    Callback = function(bool)
+        
+    end
+})
+Section_ViewModel:Check({
+    Text = "Gun",
+    Flag = 'vm_gun',
+    Callback = function(bool)
+        
+    end
+})
+
