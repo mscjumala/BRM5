@@ -17,9 +17,9 @@ end
 local function notBehindWall(target)
 	local RayParams = RaycastParams.new()
 	RayParams.FilterType = Enum.RaycastFilterType.Exclude
-	RayParams.FilterDescendantsInstances = {Ignore,hitboxlist}
+	RayParams.FilterDescendantsInstances = {Camera,target}
 	local RayResult = workspace:Raycast(workspace.CurrentCamera.CFrame.Position,(target.Position - workspace.CurrentCamera.CFrame.Position), RayParams) --Origin, Destination, RayParams 
-	if RayResult then
+	if not RayResult then
         if RayResult.Instance.Parent == target.Parent then   
             return true
         end
@@ -330,13 +330,12 @@ fovCircle.Color = Color3.new(1, 1, 1)
 fovCircle.Thickness = 2
 fovCircle.Transparency = 1
 fovCircle.Filled = false
-fovCircle.Radius = Flags.aimbot_fovsize
+fovCircle.Radius = 100
 fovCircle.Visible = true
 
 local function updateFOVCircle()
     local screenCenter = Vector2.new(game.Workspace.CurrentCamera.ViewportSize.X / 2, game.Workspace.CurrentCamera.ViewportSize.Y / 2)
     fovCircle.Position = screenCenter
-    fovCircle.Radius = Flags.aimbot_fovsize
 end
 
 local function getNearestTarget()
@@ -461,7 +460,7 @@ Section_Aiming:Slider({
     Maximum = 1000,
     Postfix = "",
     Callback = function(n)
-        
+        fovCircle.Radius = n
     end
 })
 Section_Aiming:Dropdown({
